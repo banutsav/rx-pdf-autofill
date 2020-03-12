@@ -24,7 +24,7 @@ def getDataDict(row):
 	,'sec_2': str(datetime.today().strftime('%m-%d-%Y'))
 	,'sec_3': row['ServiceProviderID']
 	,'sec_5': row['DateOfBirth']
-	,'sec_6': '843330118'
+	,'sec_6': '84-4771022' #,'sec_6': '843330118'
 	,'sec_7': row['EmployerName']
 	,'sec_8': 'Not On File'
 	,'sec_9': row['PatientFirstName'] + ' , ' + row['PatientLastName'] 
@@ -97,10 +97,10 @@ if __name__ == '__main__':
 				data_dict = getDataDict(row)
 				
 				# location address based on facility
-				if row['FacilityName'].strip() == 'Elite Rx Facility':
+				'''if row['FacilityName'].strip() == 'Elite Rx Facility':
 					data_dict['sec_4'] = 'Elite Rx Facility , ' + 'PO BOX 4379, WAYNE NJ 07474 (551 900 2255)'
-				elif row['FacilityName'].strip() == 'Rx Solutions':
-					data_dict['sec_4'] = 'StreamlineRx , 2861 Executive Dr STE 210, Clearwater, FL 33762 (727 565 0245)'
+				elif row['FacilityName'].strip() == 'Rx Solutions':'''
+				data_dict['sec_4'] = 'StreamlineRx , 2861 Executive Dr STE 210, Clearwater, FL 33762 (727 565 0245)'
 
 				# construct filename
 				filename = row['PatientLastName'] + ',' + row['PatientFirstName'] + ',' 

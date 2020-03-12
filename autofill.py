@@ -73,7 +73,7 @@ def getDataDict(row):
 	'ins_state': str(row['EmployerStateProvinceAddress']),
 	'pt_zip': str(row['MemberZipCode']),
 	'ins_zip': str(row['EmployerZipPostalCode']),
-	'ins_policy': str(row['CardholderID']),
+	'ins_policy': '', #str(row['CardholderID']),
 	#'employment': '/YES',
 	#'pt_auto_accident': '/NO',
 	#'other_accident': '/NO',
@@ -229,7 +229,7 @@ if __name__ == '__main__':
 				
 				# check if in result-set
 				if person in results:
-					print('Record for: ' + person + ' already exists')
+					#print('Record for: ' + person + ' already exists')
 					results[person]['records'] += 1
 					newrow, price = add_new_charges_to_dict(row, results[person]['records'])
 					results[person]['data'] = {**results[person]['data'], **newrow}
@@ -239,29 +239,31 @@ if __name__ == '__main__':
 				# new person to be added
 
 				# skip if texas
-				if row['MemberState'] == 'TX':
-					print('Skipping record (TX) for ' + row['PatientLastName'] + ',' + row['PatientFirstName'])
+				if row['MemberState'] == 'TX' or row['MemberState'] == 'FL':
+					print('Skipping record for ' + row['PatientLastName'] + ',' + row['PatientFirstName'])
 					continue
 				
 				# construct dictionary to populate fields
 				data_dict, price = getDataDict(row)
 
 				# location address based on facility
-				if row['FacilityName'].strip() == 'Elite Rx Facility':
+				'''if row['FacilityName'].strip() == 'Elite Rx Facility':
 					data_dict['doc_phone area'] = '551'
 					data_dict['doc_phone'] = '900 2255'
 					data_dict['doc_street'] = 'PO BOX 4379'
 					data_dict['doc_location'] = 'WAYNE NJ 07474'
 					data_dict['pin'] = '1982240735'
 					data_dict['tax_id'] = '84-3330118'
-				elif row['FacilityName'].strip() == 'Rx Solutions':
-					data_dict['doc_name'] = 'StreamlineRx'
-					data_dict['tax_id'] = '84-4771022'
-					data_dict['doc_phone area'] = '727'
-					data_dict['doc_phone'] = '565 0245'
-					data_dict['doc_street'] = '2861 Executive Dr STE 210'
-					data_dict['doc_location'] = 'Clearwater, FL 33762'
-					data_dict['pin'] = '1184257743'
+				elif row['FacilityName'].strip() == 'Rx Solutions':'''
+
+				# only streamline rx addresses to be shown
+				data_dict['doc_name'] = 'StreamlineRx'
+				data_dict['tax_id'] = '84-4771022'
+				data_dict['doc_phone area'] = '727'
+				data_dict['doc_phone'] = '565 0245'
+				data_dict['doc_street'] = '2861 Executive Dr STE 210'
+				data_dict['doc_location'] = 'Clearwater, FL 33762'
+				data_dict['pin'] = '1184257743'
 
 				# check diagnosis codes
 				if row['DiagnosisCodes'] != '':
@@ -281,7 +283,8 @@ if __name__ == '__main__':
 		persondict['data']['t_charge'] = str(round(persondict['totalprice'], 2))
 		# write out PDF
 		writeFillablePDF(INVOICE_TEMPLATE_PATH, 'output/' + persondict['filename'], persondict['data'])
-		print('Writing out file for',person,'with',persondict['records'],'records with total cost',persondict['totalprice'])
+		print('Writing out file for',person,'with',persondict['records']
+			,'records with total cost',persondict['totalprice'],'location',row['PharmacyLocationName'])
 
 	# end of writing
 	t = time.time()-t1
