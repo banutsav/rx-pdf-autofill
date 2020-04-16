@@ -1,0 +1,50 @@
+field,status
+ClaimNo,not required 
+DateOfService,required
+ServiceProviderID,required
+PrescriptionReferenceNumber,required
+ProductID,required
+DrugName,required
+StrengthDescription,required
+DosageForm,required
+DEAClassCode,not required 
+TherapeuticClass14,required
+QuantityDispensed,required
+DaysSupply,required
+CardholderID,required
+PatientFirstName,required
+PatientLastName,required
+DateOfBirth,required
+Gender,required
+MemberAddress,required
+MemberAddressLineTwo,not required
+MemberCity,required
+MemberState,required
+MemberZipCode,required
+PrescriberID,required
+PrescriberName,required
+PrescriberAddress,not required
+PrescriberAddressLineTwo,not required 
+PrescriberCity,not required 
+PrescriberState,not required 
+PrescriberZipCode,not required 
+UsualAndCustomaryCharge,not required 
+AWP,required
+FacilityName,not required
+PharmacyLocationName,required
+PharmacyLocationAddress,required
+PharmacyLocationCity,required
+PharmacyLocationState,required
+PharmacyLocationZipCode,required
+PharmacyLocationPhone,required
+DiagnosisCodes,required
+DateOfInjury,required
+EmployerName,required
+EmployerStreetAddress,required
+EmployerCityAddress,required
+EmployerStateProvinceAddress,required
+EmployerZipPostalCode,required
+EmployerPhoneNumber,not required
+EmployerContactName,not reuired
+CarrierID,not required
+ClaimReferenceID,not required

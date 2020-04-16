@@ -17,7 +17,22 @@ WIDGET_SUBTYPE_KEY = '/Widget'
 
 # construct date of birth
 def getDate(date):
-	return (str(date)[4:6] + '/' + str(date)[6:] + '/' + str(date)[0:4])
+	return (str(date)[4:6] + '/' + str(date)[6:8] + '/' + str(date)[0:4])
+
+# processing the card holder ID
+def process_cardholder_id(id, row):
+	# check if 7 digit numeric data type starting with the number 6
+	if (len(id) == 7) and (id[0] == '6'):
+		# see if claim reference id can be used
+		if str(row['ClaimReferenceID']) != '':
+			return str(row['ClaimReferenceID'])
+		# see if carrier id can be used
+		elif str(row['CarrierID']) != '':
+			return str(row['CarrierID'])
+		# return blank
+		return ''
+	else:
+		return id
 
 # construct a data dictionary from the details row
 def getDataDict(row):
@@ -29,8 +44,8 @@ def getDataDict(row):
 	data_dict = {
 	'8 EMPLOYERS NAME  ADDRESS': row['ClaimReferenceID'],
 	'5 GENDER': row['PatientFirstName'] + ' ' + row['PatientLastName'],
-	'2 EMPLOYEES SOCIAL SECURITY  OR DIVISION ASSIGNED': row['CardholderID'],
-	'7 INSURERCARRIER NAME  ADDRESS': row['DateOfInjury'],
+	'2 EMPLOYEES SOCIAL SECURITY  OR DIVISION ASSIGNED': process_cardholder_id(str(row['CardholderID']), row), #row['CardholderID']
+	'7 INSURERCARRIER NAME  ADDRESS': getDate(row['DateOfInjury']),
 	'4 EMPLOYEES DOB': getDate(row['DateOfBirth']),
 	'7 INSURERCARRIER NAME  ADDRESS_2': row['EmployerName'] + '\n' + row['EmployerStreetAddress'] 
 	+ '\n' + row['EmployerCityAddress'] + '\n' + row['EmployerStateProvinceAddress'] 
@@ -45,10 +60,15 @@ def getDataDict(row):
 	'26 PHYSICAL ADDRESS OF PHARMACY OR MEDICAL SUPPLIER': row['PharmacyLocationName'],
 	'25 REMITTANCE RECIPIENTS FEIN': '84-4771022',
 	'26 PHYSICAL ADDRESS OF PHARMACY OR MEDICAL SUPPLIER_2': row['PharmacyLocationAddress'] 
-	+ '\n' + row['PharmacyLocationCity'] + '\n' + row['PharmacyLocationState'] + '\n' + str(row['PharmacyLocationZipCode']),
+	+ '\n' + row['PharmacyLocationCity'] + '\n' + row['PharmacyLocationState'] + '\n' + str(row['PharmacyLocationZipCode']).split('.')[0],
 	'27 REMITTANCE ADDRESS if different from Field 26 Check if Same': 'StreamlineRx\n2861 Executive Dr STE 210\nClearwater, FL 33762\nNPI1184257743',
 	}
 	
+	# for a specific pharmacy in FL
+	if row['PharmacyLocationName'] == 'PRECISIONMED PHARMACY':
+		data_dict['FOR INSURERCARRIER USE'] = 'Zenaida Quinn'
+		data_dict['29 PHARMACISTS DOH LICENSE  MED SUPPLIERS LICENSE'] = 'PS34350'
+
 	return data_dict
 
 # fill out the pdf with the values of the data dictionary
@@ -90,6 +110,17 @@ def add_new_charges_to_dict(row, index):
 	
 	return datadict, price
 
+# get location for the file based on the required and not-required fields
+def get_location(record):
+	df = pd.read_csv('input/required-fields.csv')
+	required = df[df['status']=='required']
+	for index, row in required.iterrows():
+		field = row['field']
+		if record[field] == '':
+			print('missing field',field)
+			return 'missing'
+	return 'completed'
+
 if __name__ == '__main__':
 	t1 = time.time()
 	print('Starting the FL-DWC-10 PDF autofill process...')
@@ -97,19 +128,30 @@ if __name__ == '__main__':
 	# results dictionary
 	results = {}
 	# iterate over data files in the input directory
-	files = [i for i in os.listdir("input") if i.endswith("txt")]
+	files = [i for i in os.listdir("input") if (i.endswith("txt") or i.endswith("xls") or i.endswith("xlsx"))]
 
 	# iterate over the files
 	for file in files:
 		# try statement
 		try:
-			# construct data frame
-			df = pd.read_csv('input/' + file, sep="|")
+			# get file extension
+			file_ext = os.path.splitext(file)[1]
+			
+			# construct data frame based on type of file
+			if file_ext == '.txt':
+				df = pd.read_csv('input/' + file, sep="|")
+			elif file_ext == '.xls' or file_ext == '.xlsx':
+				df = pd.read_excel('input/' + file)
 			# replace na's
 			df = df.fillna('')
 
 			# iterate across the data
 			for index, row in df.iterrows():
+
+				# skip based on the isReversal and TransactionResponseStatus fields
+				if row['TransactionResponseStatus'] != 'P':
+					print('skipping record for ' + row['PatientLastName'] + ',' + row['PatientFirstName'])
+					continue
 				
 				# skip if not florida
 				if row['MemberState'] != 'FL':
@@ -119,7 +161,7 @@ if __name__ == '__main__':
 				# construct filename
 				filename = row['PatientLastName'] + ',' + row['PatientFirstName'] + ',' 
 				filename += str(row['PharmacyLocationName']) + ',' + str(row['DateOfService']) + ',' 
-				filename += row['FacilityName'] + ',' + row['MemberState'] + ',dwc066.pdf'
+				filename += row['MemberState'] + ',dwc066.pdf' #row['FacilityName'] + ',' +
 
 				# construct dictionary key
 				person = row['PatientLastName'] + '-' + row['PatientFirstName'] + '-' + str(row['DateOfBirth'])
@@ -137,7 +179,7 @@ if __name__ == '__main__':
 				data_dict = getDataDict(row)
 
 				# write out first version file
-				writeFillablePDF(INVOICE_TEMPLATE_PATH, 'output/' + filename, data_dict)
+				writeFillablePDF(INVOICE_TEMPLATE_PATH, 'output/' + get_location(row) + '/' + filename, data_dict)
 				print('Added ' + row['PatientLastName'] + ',' + row['PatientFirstName']);
 
 
